@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "text.html.antlers",
+  "name": "Antlers",
+  "patterns": [
+    { "include": "text.html.basic" },
+    {
+      "comment": "Antlers template expressions",
+      "name": "meta.expression.antlers",
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "patterns": [
+        { "include": "#antlers-inner" }
+      ]
+    }
+  ],
+  "repository": {
+    "antlers-inner": {
+      "patterns": [
+        {
+          "name": "keyword.control.antlers",
+          "match": "\\b(if|else|endif|unless|endunless|each|endeach|partial|yield|stack|push|once)\\b"
+        },
+        {
+          "name": "variable.other.antlers",
+          "match": "[a-zA-Z_][a-zA-Z0-9_:.-]*"
+        }
+      ]
+    }
+  }
+}
