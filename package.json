@@ -2,7 +2,7 @@
   "name": "antlers-css-validation",
   "displayName": "Antlers CSS Validation",
   "description": "CSS validation for .antlers.html that treats {{ ... }} template expressions as valid inside <style> blocks",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "joshdaugherty",
   "license": "MIT",
   "author": {
