@@ -4,9 +4,9 @@ VS Code extension that validates CSS inside `<style>` blocks in `.antlers.html` 
 
 ## How it works
 
-- Registers the language **Antlers** for `*.antlers.html`.
-- When you open such a file, the built-in HTML/CSS validator does **not** run (the file is no longer treated as HTML).
-- This extension finds every `<style>...</style>` block, replaces each `{{ ... }}` with spaces (to keep positions correct), runs the CSS language service on that preprocessed CSS, then maps diagnostics back to the original document.
+- Contributes **`.antlers.html`** (and `.antlers.htm`) to the built-in **HTML** language, so those files keep full HTML behavior (validation, IntelliSense, Emmet, etc.) by default.
+- Contributes a grammar for HTML that injects Antlers syntax (`{{ ... }}`) into `text.html.basic`, so you get HTML + Antlers highlighting without any settings.
+- This extension activates on HTML and runs only for Antlers HTML files (by path). It finds every `<style>...</style>` block, replaces each `{{ ... }}` with a valid placeholder (to keep positions correct), runs the CSS language service on that preprocessed CSS, then maps diagnostics back to the original document.
 
 ## Installation (no marketplace)
 
@@ -55,15 +55,21 @@ You can reuse the same `.vsix` on other machines or back up the file; re-run `vs
 3. Press **F5** (or **Run > Start Debugging**) to open a new window with the extension loaded.
 4. In that window, open a `.antlers.html` file to test.
 
-## File association
+## Built-in CSS validation
 
-If `.antlers.html` files still open as “HTML”, add to your user or workspace settings:
+Because `.antlers.html` is treated as **HTML**, VS Code’s built-in validator also runs on `<style>` blocks. It doesn’t understand Antlers, so it reports false errors like “identifier expected” or “} expected” at `#{{ 'module-' + id }}`.
+
+**This extension sets the default** `html.validate.styles` to **false** so the built-in validator is off. **This extension then validates `<style>` in all HTML files:** for `.antlers.html` it strips `{{ ... }}` first (Antlers-aware), for plain `.html` / `.htm` it validates the CSS as-is. So you keep full style validation for both Antlers and non-Antlers HTML; only the built-in run is disabled. After installing, reload the window if you still see duplicate CSS errors.
+
+To turn the built-in validator back on (e.g. for plain `.html` files), set in your `settings.json`:
 
 ```json
-"files.associations": {
-  "**/*.antlers.html": "antlers"
-}
+"html.validate.styles": true
 ```
+
+## Coexistence with Antlers Toolbox (Stillat)
+
+This extension follows the same approach as [Antlers Toolbox](https://github.com/Stillat/vscode-antlers-language-server): it contributes `.antlers.html` to the **HTML** language and a grammar for HTML that includes Antlers. If both extensions are installed, `.antlers.html` remains HTML and both add their behavior (Toolbox: completions, formatting, diagnostics; this extension: CSS validation in `<style>`). Only one grammar applies to the `html` language (load order decides which).
 
 ## Requirements
 

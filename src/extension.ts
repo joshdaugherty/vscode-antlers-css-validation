@@ -44,6 +44,18 @@ function findStyleBlocks(document: vscode.TextDocument): Array<{ start: number; 
   return blocks;
 }
 
+/** True when the document is HTML (we validate <style> in all HTML). */
+function isHtmlDocument(doc: vscode.TextDocument): boolean {
+  return doc.languageId === "html";
+}
+
+/** True when the document is an Antlers HTML file (we strip {{ ... }} before validating). */
+function isAntlersHtmlDocument(doc: vscode.TextDocument): boolean {
+  if (!isHtmlDocument(doc)) return false;
+  const path = doc.uri.fsPath;
+  return path.endsWith(".antlers.html") || path.endsWith(".antlers.htm");
+}
+
 /** LSP DiagnosticSeverity (1=Error, 2=Warning, …) to VS Code DiagnosticSeverity (0=Error, 1=Warning, …). */
 function toVscodeSeverity(lspSeverity: number): vscode.DiagnosticSeverity {
   const map: vscode.DiagnosticSeverity[] = [
@@ -56,14 +68,15 @@ function toVscodeSeverity(lspSeverity: number): vscode.DiagnosticSeverity {
 }
 
 /**
- * Validate CSS inside <style> blocks: strip Antlers, run CSS LS, map diagnostics to original doc.
+ * Validate CSS inside <style> blocks. For .antlers.html we strip {{ ... }} first; for plain HTML we validate as-is.
  */
-function validateAntlersDocument(document: vscode.TextDocument): vscode.Diagnostic[] {
+function validateDocumentStyles(document: vscode.TextDocument): vscode.Diagnostic[] {
   const allDiagnostics: vscode.Diagnostic[] = [];
   const styleBlocks = findStyleBlocks(document);
+  const stripAntlers = isAntlersHtmlDocument(document);
 
   for (const block of styleBlocks) {
-    const preprocessed = stripAntlersExpressions(block.content);
+    const preprocessed = stripAntlers ? stripAntlersExpressions(block.content) : block.content;
     const virtualUri = `antlers-css://${document.uri.fsPath}#${block.start}.css`;
     const virtualDoc = TextDocument.create(
       virtualUri,
@@ -98,32 +111,32 @@ export function activate(context: vscode.ExtensionContext): void {
   function updateDiagnostics(uri: vscode.Uri, document?: vscode.TextDocument): void {
     if (uri.scheme !== "file") return;
     const doc = document ?? vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
-    if (!doc || doc.languageId !== "antlers") {
+    if (!doc || !isHtmlDocument(doc)) {
       collection.delete(uri);
       return;
     }
-    const diagnostics = validateAntlersDocument(doc);
+    const diagnostics = validateDocumentStyles(doc);
     collection.set(uri, diagnostics);
   }
 
   function refreshAll(): void {
     for (const doc of vscode.workspace.textDocuments) {
-      if (doc.languageId === "antlers") updateDiagnostics(doc.uri);
+      if (isHtmlDocument(doc)) updateDiagnostics(doc.uri);
     }
   }
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((doc) => {
-      if (doc.languageId === "antlers") updateDiagnostics(doc.uri, doc);
+      if (isHtmlDocument(doc)) updateDiagnostics(doc.uri, doc);
     }),
     vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document.languageId === "antlers") updateDiagnostics(e.document.uri, e.document);
+      if (isHtmlDocument(e.document)) updateDiagnostics(e.document.uri, e.document);
     }),
     vscode.workspace.onDidCloseTextDocument((doc) => {
       collection.delete(doc.uri);
     }),
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (editor?.document.languageId === "antlers") updateDiagnostics(editor.document.uri, editor.document);
+      if (editor && isHtmlDocument(editor.document)) updateDiagnostics(editor.document.uri, editor.document);
     })
   );
 

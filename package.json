@@ -2,7 +2,7 @@
   "name": "antlers-css-validation",
   "displayName": "Antlers CSS Validation",
   "description": "CSS validation for .antlers.html that treats {{ ... }} template expressions as valid inside <style> blocks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "joshdaugherty",
   "license": "MIT",
   "author": {
@@ -34,12 +34,15 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "html.validate.styles": false
+    },
     "languages": [
       {
-        "id": "antlers",
+        "id": "html",
         "aliases": [
-          "Antlers",
-          "Statamic Antlers"
+          "HTML (Antlers)",
+          "Antlers"
         ],
         "extensions": [".antlers.html"],
         "configuration": "./language-configuration.json"
@@ -47,7 +50,7 @@
     ],
     "grammars": [
       {
-        "language": "antlers",
+        "language": "html",
         "scopeName": "text.html.antlers",
         "path": "./syntaxes/antlers.tmLanguage.json",
         "embeddedLanguages": {
